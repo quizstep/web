@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JEE Study Materials | PrepPortal</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        /* Specific styles for inner pages */
+        .page-header { padding: 3rem 5%; background: var(--surface-color); border-bottom: 1px solid var(--border-color); }
+        .content-section { padding: 2rem 5%; max-width: 1200px; margin: 0 auto; }
+        .material-list { display: flex; flex-direction: column; gap: 1rem; margin-top: 2rem; }
+        .material-item { padding: 1rem; border: 1px solid var(--border-color); border-radius: 6px; display: flex; justify-content: space-between; align-items: center; background: var(--surface-color); }
+    </style>
+</head>
+<body>
+    <header class="topbar">
+        <div class="logo-section">
+            <div class="logo-placeholder"></div>
+            <a href="../index.html" class="brand-name" style="text-decoration:none;">PrepPortal</a>
+        </div>
+        <button id="theme-toggle" class="btn-icon">🌓</button>
+    </header>
+
+    <div class="page-header">
+        <h1>JEE Joint Entrance Examination</h1>
+        <p style="color: var(--text-secondary); margin-top: 0.5rem;">Select a subject to view available question banks.</p>
+        <div class="subjects" style="margin-top: 1rem;">
+            <button class="btn-primary">Physics</button>
+            <button class="btn-primary">Chemistry</button>
+            <button class="btn-primary">Maths</button>
+        </div>
+    </div>
+
+    <section class="content-section">
+        <h2>Available Materials</h2>
+        <!-- This list will later be populated by your database/backend -->
+        <div class="material-list">
+            <div class="material-item">
+                <div>
+                    <h4>Mechanics - Question Bank Vol 1</h4>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary);">Physics • 50 Questions</p>
+                </div>
+                <button class="btn-primary" style="background-color: var(--surface-color); color: var(--primary-blue); border: 1px solid var(--primary-blue);">Unlock / View</button>
+            </div>
+            <!-- More items here -->
+        </div>
+    </section>
+
+    <script src="../js/script.js"></script>
+</body>
+</html>

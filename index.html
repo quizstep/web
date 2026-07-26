@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PrepPortal | Affordable Entrance Study Materials</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Topbar -->
+    <header class="topbar">
+        <div class="logo-section">
+            <!-- Replace with actual logo image later -->
+            <div class="logo-placeholder"></div>
+            <span class="brand-name">PrepPortal</span>
+        </div>
+        <nav class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="#exams">Exams</a>
+            <button id="theme-toggle" class="btn-icon">🌓</button>
+            <!-- Future Backend: Auth buttons -->
+            <button class="btn-primary" id="login-btn">Log In</button>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <h1>Focused Study Materials for Entrance Exams</h1>
+        <p>Access highly relevant, affordable question banks tailored for engineering and medical entrance examinations.</p>
+        <a href="#exams" class="btn-primary large">Browse Materials</a>
+    </section>
+
+    <!-- Exams Grid -->
+    <section id="exams" class="exams-section">
+        <h2>Select Your Exam</h2>
+        <div class="grid-container">
+            
+            <!-- JEE Card -->
+            <a href="pages/jee.html" class="exam-card">
+                <h3>JEE</h3>
+                <p>Joint Entrance Examination</p>
+                <div class="subjects">
+                    <span class="tag">Physics</span>
+                    <span class="tag">Chemistry</span>
+                    <span class="tag">Maths</span>
+                </div>
+            </a>
+
+            <!-- NEET Card -->
+            <a href="pages/neet.html" class="exam-card">
+                <h3>NEET</h3>
+                <p>National Eligibility cum Entrance Test</p>
+                <div class="subjects">
+                    <span class="tag">Physics</span>
+                    <span class="tag">Chemistry</span>
+                    <span class="tag">Biology</span>
+                </div>
+            </a>
+
+            <!-- KEAM Card -->
+            <a href="pages/keam.html" class="exam-card">
+                <h3>KEAM</h3>
+                <p>Kerala Engineering Architecture Medical</p>
+                <div class="subjects">
+                    <span class="tag">Physics</span>
+                    <span class="tag">Chemistry</span>
+                    <span class="tag">Maths</span>
+                    <span class="tag">Biology</span>
+                </div>
+            </a>
+
+            <!-- CUET Card -->
+            <a href="pages/cuet.html" class="exam-card">
+                <h3>CUET</h3>
+                <p>Common University Entrance Test</p>
+                <div class="subjects">
+                    <span class="tag">Physics</span>
+                    <span class="tag">Chemistry</span>
+                    <span class="tag">Maths</span>
+                    <span class="tag">Biology</span>
+                </div>
+            </a>
+
+        </div>
+    </section>
+
+    <footer>
+        <p>&copy; 2026 PrepPortal. All rights reserved.</p>
+    </footer>
+
+    <script src="js/script.js"></script>
+</body>
+</html>
