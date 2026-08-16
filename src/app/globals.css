@@ -1,0 +1,72 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary-blue: #0056b3;
+  --primary-hover: #004085;
+  --bg-color: #f8f9fa;
+  --surface-color: #ffffff;
+  --text-primary: #212529;
+  --text-secondary: #6c757d;
+  --border-color: #dee2e6;
+  --tag-bg: #e9ecef;
+}
+
+[data-theme="dark"] {
+  --primary-blue: #3b82f6;
+  --primary-hover: #2563eb;
+  --bg-color: #0f172a;
+  --surface-color: #1e293b;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --border-color: #334155;
+  --tag-bg: #334155;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  overflow-x: hidden;
+}
+
+/* Custom Unlock button styles */
+.btn-unlock {
+  background-color: transparent;
+  color: var(--primary-blue) !important;
+  border: 1.5px solid var(--primary-blue);
+  padding: 0.5rem 1.25rem;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-unlock:hover {
+  background-color: var(--primary-blue);
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(0, 86, 179, 0.25);
+  transform: translateY(-1px);
+}
+
+[data-theme="dark"] .btn-unlock {
+  color: #93c5fd !important;
+  border-color: #3b82f6;
+  background-color: rgba(59, 130, 246, 0.12);
+}
+
+[data-theme="dark"] .btn-unlock:hover {
+  background-color: #3b82f6;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+}
