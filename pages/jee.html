@@ -3,8 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JEE Study Materials | PrepPortal</title>
+    <title>JEE Study Materials | QuizStep</title>
+    <link rel="icon" type="image/png" href="../images/favicon.png">
+    <link rel="apple-touch-icon" href="../images/apple-touch-icon.png">
     <link rel="stylesheet" href="../css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         /* Specific styles for inner pages */
         .page-header { padding: 3rem 5%; background: var(--surface-color); border-bottom: 1px solid var(--border-color); }
@@ -16,10 +19,17 @@
 <body>
     <header class="topbar">
         <div class="logo-section">
-            <div class="logo-placeholder"></div>
-            <a href="../index.html" class="brand-name" style="text-decoration:none;">PrepPortal</a>
+            <img src="../images/logo-icon.png" alt="QuizStep Logo" class="brand-logo" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 36 36\'><rect width=\'36\' height=\'36\' rx=\'6\' fill=\'%230056b3\'/><text x=\'50%25\' y=\'55%25\' dominant-baseline=\'middle\' text-anchor=\'middle\' fill=\'white\' font-family=\'sans-serif\' font-size=\'16\' font-weight=\'bold\'>Q</text></svg>';">
+            <span class="brand-name">QuizStep</span>
         </div>
-        <button id="theme-toggle" class="btn-icon">🌓</button>
+        <nav class="nav-links">
+            <a href="../index.html">Home</a>
+            <a href="../index.html#exams">Exams</a>
+            <button id="theme-toggle" class="btn-icon" aria-label="Toggle theme" title="Toggle theme"></button>
+            <div id="auth-nav-slot" class="auth-nav-slot">
+                <a href="../login.html" class="btn-primary nav-login-btn" id="login-btn">Log In</a>
+            </div>
+        </nav>
     </header>
 
     <div class="page-header">
@@ -41,12 +51,16 @@
                     <h4>Mechanics - Question Bank Vol 1</h4>
                     <p style="font-size: 0.85rem; color: var(--text-secondary);">Physics • 50 Questions</p>
                 </div>
-                <button class="btn-primary" style="background-color: var(--surface-color); color: var(--primary-blue); border: 1px solid var(--primary-blue);">Unlock / View</button>
+                <button class="btn-unlock">Unlock / View</button>
             </div>
             <!-- More items here -->
         </div>
     </section>
 
+    <!-- Supabase JS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/supabase-config.js"></script>
+    <script src="../js/auth.js"></script>
     <script src="../js/script.js"></script>
 </body>
 </html>
