@@ -3,31 +3,34 @@
 -- ============================================
 
 -- Enable Row Level Security
-alter table profiles enable row level security;
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 
 
 -- ============================================
 -- USERS CAN VIEW THEIR OWN PROFILE
 -- ============================================
-create policy "Users can view own profile"
-on profiles
-for select
-using (auth.uid() = id);
+CREATE POLICY "Users can view own profile"
+ON profiles
+FOR SELECT
+USING (auth.uid() = id);
 
 
 -- ============================================
 -- USERS CAN INSERT THEIR OWN PROFILE
 -- ============================================
-create policy "Users can insert own profile"
-on profiles
-for insert
-with check (auth.uid() = id);
+CREATE POLICY "Users can insert own profile"
+ON profiles
+FOR INSERT
+WITH CHECK (auth.uid() = id);
 
 
 -- ============================================
 -- USERS CAN UPDATE THEIR OWN PROFILE
 -- ============================================
-create policy "Users can update own profile"
-on profiles
-for update
-using (auth.uid() = id);
+CREATE POLICY "Users can update own profile"
+ON profiles
+FOR UPDATE
+USING (auth.uid() = id)
+WITH CHECK (
+  auth.uid() = id
+);

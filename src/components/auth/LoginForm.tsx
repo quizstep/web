@@ -11,7 +11,7 @@ import { authService } from "@/lib/services/authService";
 
 export function LoginForm() {
   const router = useRouter();
-  const [identifier, setIdentifier] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [alert, setAlert] = useState<{ message: string; type: "error" | "success" | "info" } | null>(null);
@@ -20,8 +20,8 @@ export function LoginForm() {
     e.preventDefault();
     setAlert(null);
 
-    if (!identifier.trim()) {
-      setAlert({ message: "Please enter your email or phone number.", type: "error" });
+    if (!email.trim()) {
+      setAlert({ message: "Please enter your email address.", type: "error" });
       return;
     }
 
@@ -34,7 +34,7 @@ export function LoginForm() {
 
     try {
       const response = await authService.login({
-        identifier: identifier.trim(),
+        email: email.trim(),
         password,
       });
 
@@ -77,13 +77,13 @@ export function LoginForm() {
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         <Input
-          label="Email or Phone"
-          type="text"
-          name="identifier"
-          placeholder="Email or phone"
-          autoComplete="username"
-          value={identifier}
-          onChange={(e) => setIdentifier(e.target.value)}
+          label="Email"
+          type="email"
+          name="email"
+          placeholder="Email address"
+          autoComplete="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
           required
         />
 

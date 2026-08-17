@@ -1,4 +1,4 @@
-import type { PasswordEvaluation, PhoneValidationResult } from "@/types/auth";
+import type { PasswordEvaluation } from "@/types/auth";
 
 // Common / compromised / easily guessed password blocklist
 export const COMMON_PASSWORDS = new Set([
@@ -10,51 +10,6 @@ export const COMMON_PASSWORDS = new Set([
   'donald123', 'computer1', 'secret123', 'myspace1', 'starwars', 'letmein123',
   '11111111', '00000000', '88888888', 'abcdefgh', 'pass1234'
 ]);
-
-/**
- * Validate phone number (must be 10 digits if provided)
- */
-export function validatePhoneNumber(phoneInput?: string): PhoneValidationResult {
-  if (!phoneInput) return { isValid: true, cleanDigits: '', formatted: '' };
-
-  const raw = String(phoneInput).trim();
-  if (!raw) return { isValid: true, cleanDigits: '', formatted: '' };
-
-  // Extract digits only
-  const digitsOnly = raw.replace(/\D/g, '');
-
-  // Normalize: allow 10 digits, or 11 with leading 0, or 12 with leading 91
-  let tenDigits = '';
-  if (digitsOnly.length === 10) {
-    tenDigits = digitsOnly;
-  } else if (digitsOnly.length === 11 && digitsOnly.startsWith('0')) {
-    tenDigits = digitsOnly.slice(1);
-  } else if (digitsOnly.length === 12 && digitsOnly.startsWith('91')) {
-    tenDigits = digitsOnly.slice(2);
-  } else {
-    return {
-      isValid: false,
-      cleanDigits: '',
-      formatted: '',
-      message: 'Please enter a valid 10-digit mobile number (e.g. 9876543210).'
-    };
-  }
-
-  if (!/^[5-9]\d{9}$/.test(tenDigits) && !/^\d{10}$/.test(tenDigits)) {
-    return {
-      isValid: false,
-      cleanDigits: '',
-      formatted: '',
-      message: 'Please enter a valid 10-digit mobile number.'
-    };
-  }
-
-  return {
-    isValid: true,
-    cleanDigits: tenDigits,
-    formatted: '+91' + tenDigits
-  };
-}
 
 /**
  * Validate email format

@@ -6,7 +6,6 @@ export interface AuthUser {
   id: string;
   email: string;
   fullName: string;
-  phone?: string;
   role: 'student' | 'admin';
   createdAt?: string;
 }
@@ -18,14 +17,13 @@ export interface UserSession {
 }
 
 export interface LoginCredentials {
-  identifier: string; // email or 10-digit mobile number
+  email: string;
   password: string;
 }
 
 export interface RegisterCredentials {
   fullName: string;
   email: string;
-  phone?: string;
   password: string;
   confirmPassword?: string;
 }
@@ -36,13 +34,6 @@ export interface PasswordEvaluation {
   className: string;
   hint: string;
   isAcceptable: boolean;
-}
-
-export interface PhoneValidationResult {
-  isValid: boolean;
-  cleanDigits: string;
-  formatted: string;
-  message?: string;
 }
 
 export interface AuthResponse<T = unknown> {

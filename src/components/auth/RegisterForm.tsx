@@ -15,7 +15,6 @@ export function RegisterForm() {
   const router = useRouter();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -33,7 +32,6 @@ export function RegisterForm() {
       const response = await authService.register({
         fullName: fullName.trim(),
         email: email.trim(),
-        phone: phone.trim() || undefined,
         password,
         confirmPassword,
       });
@@ -51,7 +49,6 @@ export function RegisterForm() {
         });
         setFullName("");
         setEmail("");
-        setPhone("");
         setPassword("");
         setConfirmPassword("");
         setIsLoading(false);
@@ -101,18 +98,6 @@ export function RegisterForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-        />
-
-        <Input
-          label="Phone"
-          optional
-          type="tel"
-          name="phone"
-          placeholder="10-digit mobile"
-          autoComplete="tel"
-          maxLength={15}
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
         />
 
         <div className="space-y-1">

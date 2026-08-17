@@ -1,6 +1,6 @@
 import { getBrowserClient } from "@/lib/supabase/client";
-import { isValidEmail, validatePhoneNumber, isCommonPassword } from "@/lib/utils/validation";
-import type { AuthResponse, AuthUser, LoginCredentials, RegisterCredentials, PhoneValidationResult } from "@/types/auth";
+import { isValidEmail, isCommonPassword } from "@/lib/utils/validation";
+import type { AuthResponse, AuthUser, LoginCredentials, RegisterCredentials } from "@/types/auth";
 import type { Session } from "@supabase/supabase-js";
 
 /**
@@ -13,14 +13,18 @@ class AuthService {
   }
 
   /**
-   * Log in using Email OR 10-digit Mobile Number
+   * Log in using Email and Password
    */
   async login(credentials: LoginCredentials): Promise<AuthResponse<{ session: Session; user: AuthUser }>> {
-    const { identifier, password } = credentials;
-    const cleanId = identifier.trim();
+    const { email, password } = credentials;
+    const cleanEmail = email.trim();
 
-    if (!cleanId) {
-      return { success: false, error: "Please enter your email or phone number." };
+    if (!cleanEmail) {
+      return { success: false, error: "Please enter your email address." };
+    }
+
+    if (!isValidEmail(cleanEmail)) {
+      return { success: false, error: "Please enter a valid email address." };
     }
 
     if (!password) {
@@ -28,102 +32,24 @@ class AuthService {
     }
 
     const supabase = this.getClient();
-    const isEmail = cleanId.includes("@");
 
     try {
-      if (isEmail) {
-        if (!isValidEmail(cleanId)) {
-          return { success: false, error: "Please enter a valid email address." };
-        }
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: cleanEmail,
+        password,
+      });
 
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: cleanId,
-          password,
-        });
+      if (error) {
+        return { success: false, error: this.formatAuthError(error.message) };
+      }
 
-        if (error) {
-          return { success: false, error: this.formatAuthError(error.message) };
-        }
-
-        if (data?.session && data?.user) {
-          return {
-            success: true,
-            data: {
-              session: data.session,
-              user: this.mapSupabaseUser(data.user),
-            },
-          };
-        }
-      } else {
-        // Mobile number login
-        const phoneCheck = validatePhoneNumber(cleanId);
-        if (!phoneCheck.isValid || !phoneCheck.cleanDigits) {
-          return { success: false, error: "Please enter a valid email or 10-digit mobile number." };
-        }
-
-        const cleanDigits = phoneCheck.cleanDigits;
-
-        // Attempt 1: Direct Phone Auth (+91 format)
-        const attempt1 = await supabase.auth.signInWithPassword({
-          phone: "+91" + cleanDigits,
-          password,
-        });
-
-        if (!attempt1.error && attempt1.data?.session && attempt1.data?.user) {
-          return {
-            success: true,
-            data: {
-              session: attempt1.data.session,
-              user: this.mapSupabaseUser(attempt1.data.user),
-            },
-          };
-        }
-
-        // Attempt 2: Direct Phone Auth (raw 10-digit format)
-        const attempt2 = await supabase.auth.signInWithPassword({
-          phone: cleanDigits,
-          password,
-        });
-
-        if (!attempt2.error && attempt2.data?.session && attempt2.data?.user) {
-          return {
-            success: true,
-            data: {
-              session: attempt2.data.session,
-              user: this.mapSupabaseUser(attempt2.data.user),
-            },
-          };
-        }
-
-        // Attempt 3: Look up user email by phone helper RPC
-        try {
-          const { data: lookedUpEmail } = await supabase.rpc("get_email_by_phone", {
-            phone_input: cleanDigits,
-          });
-
-          if (lookedUpEmail) {
-            const emailAttempt = await supabase.auth.signInWithPassword({
-              email: lookedUpEmail,
-              password,
-            });
-
-            if (!emailAttempt.error && emailAttempt.data?.session && emailAttempt.data?.user) {
-              return {
-                success: true,
-                data: {
-                  session: emailAttempt.data.session,
-                  user: this.mapSupabaseUser(emailAttempt.data.user),
-                },
-              };
-            }
-          }
-        } catch {
-          // Ignore RPC lookup failure and fall through
-        }
-
+      if (data?.session && data?.user) {
         return {
-          success: false,
-          error: "Invalid email/phone or password. Please check your credentials.",
+          success: true,
+          data: {
+            session: data.session,
+            user: this.mapSupabaseUser(data.user),
+          },
         };
       }
 
@@ -135,10 +61,10 @@ class AuthService {
   }
 
   /**
-   * Register a new user with duplicate email detection & 10-digit phone validation
+   * Register a new user with duplicate email detection
    */
   async register(credentials: RegisterCredentials): Promise<AuthResponse<{ user: AuthUser }>> {
-    const { fullName, email, phone, password, confirmPassword } = credentials;
+    const { fullName, email, password, confirmPassword } = credentials;
     const cleanName = fullName.trim();
     const cleanEmail = email.trim();
 
@@ -148,14 +74,6 @@ class AuthService {
 
     if (!cleanEmail || !isValidEmail(cleanEmail)) {
       return { success: false, error: "Please enter a valid email address." };
-    }
-
-    let phoneCheck: PhoneValidationResult = { isValid: true, cleanDigits: "", formatted: "" };
-    if (phone && phone.trim()) {
-      phoneCheck = validatePhoneNumber(phone);
-      if (!phoneCheck.isValid) {
-        return { success: false, error: phoneCheck.message || "Please enter a valid 10-digit mobile number." };
-      }
     }
 
     if (!password || password.length < 8) {
@@ -179,11 +97,6 @@ class AuthService {
       const metadata: Record<string, string> = {
         full_name: cleanName,
       };
-
-      if (phoneCheck.cleanDigits) {
-        metadata.phone = phoneCheck.cleanDigits;
-        metadata.formatted_phone = phoneCheck.formatted;
-      }
 
       const { data, error } = await supabase.auth.signUp({
         email: cleanEmail,
@@ -292,7 +205,6 @@ class AuthService {
       id: user.id,
       email: user.email || "",
       fullName: (meta.full_name as string) || (user.email ? user.email.split("@")[0] : "Student"),
-      phone: (meta.phone as string) || undefined,
       role: (meta.role as "student" | "admin") || "student",
       createdAt: user.created_at,
     };
@@ -301,7 +213,7 @@ class AuthService {
   private formatAuthError(message: string): string {
     const lower = message.toLowerCase();
     if (lower.includes("invalid login credentials") || lower.includes("invalid grant")) {
-      return "Invalid email/phone or password. Please check your credentials.";
+      return "Invalid email or password. Please check your credentials.";
     }
     if (lower.includes("email not confirmed")) {
       return "Please confirm your email address before logging in.";

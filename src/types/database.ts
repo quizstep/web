@@ -6,7 +6,6 @@
 export interface ProfileTable {
   id: string; // references auth.users(id)
   full_name: string;
-  phone: string | null;
   role: 'student' | 'admin';
   created_at: string;
   updated_at: string;
