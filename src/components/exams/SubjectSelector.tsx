@@ -23,11 +23,10 @@ export function SubjectSelector({
             key={subject}
             type="button"
             variant="primary"
-            size="md"
             onClick={() => onSelectSubject?.(subject)}
-            className={`transition-all ${
+            className={`text-xs sm:text-sm px-3.5 sm:px-5 py-1.5 sm:py-2 transition-all ${
               isActive
-                ? "ring-2 ring-offset-2 ring-[var(--primary-blue)]"
+                ? "ring-2 ring-offset-2 ring-[var(--primary-blue)] shadow-sm"
                 : ""
             }`}
           >
