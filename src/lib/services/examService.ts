@@ -70,6 +70,23 @@ class ExamService {
     ],
   };
 
+  private mockPracticeMaterials: Record<string, StudyMaterial[]> = {
+    jee: [
+      {
+        id: "jee-prac-1",
+        title: "Physics Mock Test - Core Mechanics",
+        subject: "Physics",
+        questionCount: 30,
+      },
+      {
+        id: "jee-prac-2",
+        title: "Chemistry Mock Test - Organic Reactions",
+        subject: "Chemistry",
+        questionCount: 25,
+      },
+    ],
+  };
+
   getAllExams(): ExamInfo[] {
     return Object.values(this.exams);
   }
@@ -78,8 +95,14 @@ class ExamService {
     return this.exams[slug.toLowerCase()] || null;
   }
 
-  getMaterials(examSlug: string): StudyMaterial[] {
-    return this.mockMaterials[examSlug.toLowerCase()] || [];
+  getMaterials(examSlug: string, tab: string = "materials"): StudyMaterial[] {
+    const slug = examSlug.toLowerCase();
+    
+    if (tab === "practice") {
+      return this.mockPracticeMaterials[slug] || [];
+    }
+    
+    return this.mockMaterials[slug] || [];
   }
 }
 
