@@ -74,53 +74,65 @@ export function Navbar() {
           </span>
         </div>
 
-        {/* Desktop Navigation & Controls (Visible on md and up) */}
-        <nav className="hidden md:flex items-center gap-6" aria-label="Main Navigation">
-          <Link
-            href="/"
-            className={`text-sm font-medium transition-colors hover:text-[var(--primary-blue)] ${
-              pathname === "/" ? "text-[var(--primary-blue)] font-semibold" : "text-[var(--text-primary)]"
-            }`}
-          >
-            Home
-          </Link>
-          <Link
-            href="/#exams"
-            className="text-sm font-medium text-[var(--text-primary)] hover:text-[var(--primary-blue)] transition-colors"
-          >
-            Exams
-          </Link>
+        {/* Header Right Controls */}
+        <div className="flex items-center gap-2 sm:gap-4">
+          {/* Desktop Navigation Links (Visible on md and up) */}
+          <nav className="hidden md:flex items-center gap-6" aria-label="Main Navigation">
+            <Link
+              href="/"
+              className={`text-sm font-medium transition-colors hover:text-[var(--primary-blue)] ${
+                pathname === "/" ? "text-[var(--primary-blue)] font-semibold" : "text-[var(--text-primary)]"
+              }`}
+            >
+              Home
+            </Link>
+            <Link
+              href="/#exams"
+              className="text-sm font-medium text-[var(--text-primary)] hover:text-[var(--primary-blue)] transition-colors"
+            >
+              Exams
+            </Link>
+          </nav>
 
-          {/* Theme Toggle Icon */}
+          {/* Theme Toggle Icon (Visible on all screens) */}
           <ThemeToggle />
 
-          {/* Dynamic Auth State Slot */}
-          <div id="auth-nav-slot" className="flex items-center min-h-[36px]">
+          {/* Direct Auth State Slot (Directly visible on both Desktop & Mobile) */}
+          <div id="auth-nav-slot" className="flex items-center">
             {!isLoading && user ? (
-              <UserMenu user={user} onLogout={logout} />
+              <div className="flex items-center">
+                {/* On small/medium+ screens: full UserMenu with logout button */}
+                <div className="hidden sm:flex">
+                  <UserMenu user={user} onLogout={logout} />
+                </div>
+                {/* On extra-small screens: compact avatar badge */}
+                <div className="flex sm:hidden items-center">
+                  <div
+                    className="w-8 h-8 rounded-full bg-gradient-to-tr from-[var(--primary-blue)] to-[#0096c7] text-white flex items-center justify-center font-bold text-xs shadow-sm"
+                    title={user.email}
+                    aria-label={`Signed in as ${user.fullName || user.email}`}
+                  >
+                    {(user.fullName ? user.fullName.charAt(0) : user.email.charAt(0) || "U").toUpperCase()}
+                  </div>
+                </div>
+              </div>
             ) : (
               <Link
                 href="/login"
-                className="inline-flex items-center justify-center px-4 py-1.5 text-sm font-semibold rounded-md bg-[var(--primary-blue)] !text-white hover:bg-[var(--primary-hover)] transition-all duration-200 shadow-sm hover:shadow-md"
+                className="inline-flex items-center justify-center px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold rounded-lg bg-[var(--primary-blue)] !text-white hover:bg-[var(--primary-hover)] active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md"
                 id="login-btn"
               >
                 Log In
               </Link>
             )}
           </div>
-        </nav>
 
-        {/* Mobile Header Controls (Visible below md) */}
-        <div className="flex md:hidden items-center gap-2">
-          {/* Theme Toggle directly accessible on mobile header */}
-          <ThemeToggle />
-
-          {/* Mobile Menu Toggle Button */}
+          {/* Mobile Menu Toggle Button (Visible below md) */}
           <button
             type="button"
             id="mobile-menu-btn"
             onClick={() => setMobileMenuOpen((prev) => !prev)}
-            className="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-[var(--border-color)] text-[var(--text-primary)] hover:bg-[var(--tag-bg)] hover:text-[var(--primary-blue)] transition-colors focus:outline-none"
+            className="md:hidden inline-flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-lg border border-[var(--border-color)] text-[var(--text-primary)] hover:bg-[var(--tag-bg)] hover:text-[var(--primary-blue)] transition-colors focus:outline-none shrink-0"
             aria-label="Toggle navigation menu"
             aria-expanded={mobileMenuOpen}
             aria-controls="mobile-menu"
@@ -128,7 +140,7 @@ export function Navbar() {
             {mobileMenuOpen ? (
               // Close "X" icon
               <svg
-                className="w-5 h-5 stroke-current"
+                className="w-4 h-4 sm:w-5 sm:h-5 stroke-current"
                 viewBox="0 0 24 24"
                 fill="none"
                 strokeWidth="2.2"
@@ -142,7 +154,7 @@ export function Navbar() {
             ) : (
               // Hamburger icon
               <svg
-                className="w-5 h-5 stroke-current"
+                className="w-4 h-4 sm:w-5 sm:h-5 stroke-current"
                 viewBox="0 0 24 24"
                 fill="none"
                 strokeWidth="2.2"

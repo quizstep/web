@@ -1,5 +1,5 @@
 import { getBrowserClient } from "@/lib/supabase/client";
-import { getDeviceId, getDeviceInfo, getBrowserName } from "@/lib/utils/device";
+import { getDeviceId, getDeviceInfo, getDeviceInfoAsync, getBrowserName } from "@/lib/utils/device";
 import type { UserSessionTable } from "@/types/database";
 
 // ============================================
@@ -42,7 +42,7 @@ class DeviceSessionService {
   async registerCurrentDevice(): Promise<DeviceSessionResult> {
     const supabase = this.getClient();
     const deviceId = getDeviceId();
-    const deviceInfo = getDeviceInfo();
+    const deviceInfo = await getDeviceInfoAsync();
     const browserName = getBrowserName();
 
     const { data, error } = await supabase.rpc("register_device_session", {
