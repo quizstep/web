@@ -1,5 +1,6 @@
 import { getBrowserClient } from "@/lib/supabase/client";
 import { isValidEmail, isCommonPassword } from "@/lib/utils/validation";
+import { deviceSessionService } from "@/lib/services/deviceSessionService";
 import type { AuthResponse, AuthUser, LoginCredentials, RegisterCredentials } from "@/types/auth";
 import type { Session } from "@supabase/supabase-js";
 
@@ -147,10 +148,23 @@ class AuthService {
 
   /**
    * Log out active session
+   *
+   * Revokes the current QuizStep device session before
+   * signing out of Supabase Auth. The device_id in
+   * localStorage is intentionally preserved.
    */
   async logout(): Promise<AuthResponse> {
     try {
       const supabase = this.getClient();
+
+      // Revoke QuizStep device session first (best-effort).
+      // If this fails, we still sign out to avoid trapping the user.
+      try {
+        await deviceSessionService.revokeCurrentDeviceSession();
+      } catch (err) {
+        console.warn("Device session revocation failed during logout:", err);
+      }
+
       await supabase.auth.signOut();
       return { success: true };
     } catch (err) {
@@ -167,6 +181,37 @@ class AuthService {
       const supabase = this.getClient();
       const { data } = await supabase.auth.getSession();
       if (data?.session?.user) {
+        const userId = data.session.user.id;
+
+        // If this device was explicitly revoked, sign out
+        const isRevoked = await deviceSessionService.isCurrentDeviceRevoked(userId);
+        if (isRevoked) {
+          console.warn("Device session was revoked. Signing out.");
+          await supabase.auth.signOut();
+          return { session: null, user: null };
+        }
+
+        // Ensure this device has an active session row.
+        // Catches the case where a device authenticated via Supabase
+        // but never completed registration (e.g. DeviceLimitScreen tab
+        // was closed before resolving).
+        const hasSession = await deviceSessionService.hasActiveDeviceSession(userId);
+        if (!hasSession) {
+          try {
+            const result = await deviceSessionService.registerCurrentDevice();
+            if (!result.allowed) {
+              console.warn("Device limit reached on session restore. Signing out.");
+              await supabase.auth.signOut();
+              return { session: null, user: null };
+            }
+          } catch (err) {
+            // Registration RPC failed — don't sign out to avoid
+            // punishing transient errors.  Periodic checks will
+            // catch genuine revocations.
+            console.warn("Device session check during restore failed:", err);
+          }
+        }
+
         return {
           session: data.session,
           user: this.mapSupabaseUser(data.session.user),

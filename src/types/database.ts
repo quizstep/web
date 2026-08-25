@@ -70,13 +70,16 @@ export interface QuestionVideoTable {
 }
 
 export interface UserSessionTable {
-  id: string;
+  id: number;
   user_id: string;
-  ip_address: string | null;
-  user_agent: string | null;
-  is_active: boolean;
+  device_id: string;
+  device_name: string | null;
+  device_type: 'phone' | 'tablet' | 'desktop' | 'unknown';
+  browser_name: string | null;
   created_at: string;
   last_active_at: string;
+  expires_at: string;
+  revoked_at: string | null;
 }
 
 export interface ReportFeedbackTable {

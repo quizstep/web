@@ -33,20 +33,6 @@ export default function RootLayout({
       <head>
         {/* Inline script to prevent theme flash */}
         <script
-          async
-          src="https://www.googletagmanager.com/gtag/js?id=G-6W9YWEHP8D"
-        />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', 'G-6W9YWEHP8D');
-            `,
-          }}
-        />
-        <script
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
@@ -68,6 +54,9 @@ export default function RootLayout({
         <main className="flex-1 w-full">{children}</main>
         <Footer />
       </body>
+      {process.env.NEXT_PUBLIC_GA_ID && (
+        <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
+      )}
     </html>
   );
 }
