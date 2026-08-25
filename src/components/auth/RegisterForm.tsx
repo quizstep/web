@@ -9,6 +9,7 @@ import { PasswordStrengthMeter } from "@/components/auth/PasswordStrengthMeter";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { authService } from "@/lib/services/authService";
+import { deviceSessionService } from "@/lib/services/deviceSessionService";
 import { evaluatePasswordStrength } from "@/lib/utils/validation";
 
 export function RegisterForm() {
@@ -53,6 +54,13 @@ export function RegisterForm() {
         setConfirmPassword("");
         setIsLoading(false);
       } else {
+        // Auto-signed in — register this device session
+        try {
+          await deviceSessionService.registerCurrentDevice();
+        } catch (err) {
+          console.warn("Device registration after signup error:", err);
+        }
+
         setAlert({ message: "Account created successfully! Redirecting...", type: "success" });
         setTimeout(() => {
           router.push("/");
