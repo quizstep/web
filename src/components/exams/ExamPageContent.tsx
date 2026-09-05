@@ -18,52 +18,47 @@ interface ExamPageContentProps {
 function ExamPageContentInner({ exam }: ExamPageContentProps) {
   const searchParams = useSearchParams();
 
-  // Read URL search params
   const currentSubject = searchParams.get("subject") || exam.subjects[0] || "Biology";
-  const tab = searchParams.get("tab") || "notes";
+  const tab = searchParams.get("tab") || "all";
 
-  // Fetch topics for the active subject
   const topics = examService.getTopicsBySubject(currentSubject);
 
-  // Active topic
   const activeTopicId = searchParams.get("topic") || (topics[0]?.id ?? "");
   const activeTopic = topics.find((t) => t.id === activeTopicId) || topics[0];
 
   const materials = examService.getMaterials(exam.slug);
 
-  const isTopicTab = tab === "notes" || tab === "short-notes" || tab === "doubts";
   const isMaterialsTab = tab === "materials";
+  const isCustomTabNotFound = !["all", "notes", "short-notes", "doubts", "materials"].includes(tab);
 
   return (
     <div className="w-full">
-      {/* Header Section */}
-      <section className="px-4 sm:px-6 md:px-12 py-6 sm:py-8 bg-[var(--surface-color)] border-b border-[var(--border-color)] transition-colors duration-200">
+      {/* Header Banner */}
+      <section className="px-4 sm:px-6 md:px-12 py-6 sm:py-8 bg-[var(--surface-color)] border-b border-[var(--border-color)]">
         <div className="max-w-7xl mx-auto space-y-3">
           <div className="space-y-1">
             <span className="text-xs font-bold uppercase tracking-wider text-[var(--primary-blue)]">
-              {exam.name} Exam Prep
+              {exam.name} Exam Preparation
             </span>
             <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-[var(--text-primary)]">
               {exam.name} {exam.fullName}
             </h1>
             <p className="text-xs sm:text-sm text-[var(--text-secondary)]">
-              Select a subject and chapter topic below to access Notes, Short Notes, and Doubt Clearance.
+              Select a subject and chapter to access study notes, revision sheets, and doubt clearance.
             </p>
           </div>
 
-          {/* Step 4: Subject Selection */}
           <SubjectSelector subjects={exam.subjects} />
         </div>
       </section>
 
-      {/* Main Content Area */}
+      {/* Main Two-Column Layout */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-6 sm:py-10">
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
-          {/* Left Column: Menu & Chapter Selector */}
+          {/* Sidebar Area */}
           <div className="w-full lg:w-72 shrink-0 space-y-6">
-            <CourseMenuSidebar examSlug={exam.slug} />
+            <CourseMenuSidebar examSlug={exam.slug} currentSubject={currentSubject} />
             
-            {/* Step 5: Select Topic / Chapter List */}
             {topics.length > 0 && (
               <ChapterSelector
                 examSlug={exam.slug}
@@ -73,16 +68,9 @@ function ExamPageContentInner({ exam }: ExamPageContentProps) {
             )}
           </div>
 
-          {/* Right Column: Dashboard & Tab Contents */}
+          {/* Main Content Dashboard */}
           <div className="flex-1 min-w-0">
-            {isTopicTab && activeTopic ? (
-              <TopicDashboard
-                examSlug={exam.slug}
-                subject={currentSubject}
-                topic={activeTopic}
-                activeTab={tab}
-              />
-            ) : isMaterialsTab ? (
+            {isMaterialsTab ? (
               <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                   <div>
@@ -116,8 +104,7 @@ function ExamPageContentInner({ exam }: ExamPageContentProps) {
                   </div>
                 )}
               </div>
-            ) : (
-              /* Fallback for unbuilt sections inside the field as requested */
+            ) : isCustomTabNotFound ? (
               <div className="flex flex-col items-center justify-center py-20 px-4 border border-dashed border-[var(--border-color)] rounded-xl bg-[var(--surface-color)] text-center">
                 <svg
                   className="w-12 h-12 text-[var(--text-secondary)] mb-4 opacity-50"
@@ -134,7 +121,14 @@ function ExamPageContentInner({ exam }: ExamPageContentProps) {
                   We are currently preparing the content for this section. Please check back later!
                 </p>
               </div>
-            )}
+            ) : activeTopic ? (
+              <TopicDashboard
+                examSlug={exam.slug}
+                subject={currentSubject}
+                topic={activeTopic}
+                activeTab={tab}
+              />
+            ) : null}
           </div>
         </div>
       </section>
