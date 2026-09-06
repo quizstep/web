@@ -119,11 +119,10 @@ class ExamService {
       { id: "phy-3", name: "Work, Power and Energy", category: "Class XI Physics" },
       { id: "phy-4", name: "Rotational Motion", category: "Class XI Physics" },
       { id: "phy-5", name: "Gravitation", category: "Class XI Physics" },
-      { id: "phy-6", name: "Human Physiology & Thermodynamics", category: "Class XI Physics" },
+      { id: "phy-6", name: "Thermodynamics", category: "Class XI Physics" },
       { id: "phy-7", name: "Electrostatics & Capacitance", category: "Class XII Physics" },
       { id: "phy-8", name: "Current Electricity & Circuits", category: "Class XII Physics" },
       { id: "phy-9", name: "Magnetic Effects of Current", category: "Class XII Physics" },
-      { id: "phy-10", name: "Optics and Wave Phenomena", category: "Class XII Physics" },
     ],
     Maths: [
       { id: "math-1", name: "Sets, Relations and Functions", category: "Class XI Maths" },
@@ -199,19 +198,23 @@ class ExamService {
     const normalized = Object.keys(this.subjectTopics).find(
       (s) => s.toLowerCase() === subjectName.toLowerCase()
     );
-    return normalized ? this.subjectTopics[normalized] : [];
+    const list = normalized ? this.subjectTopics[normalized] : [];
+    return list.map((t) => ({
+      ...t,
+      hasNotes: t.hasNotes ?? true,
+      hasShortNotes: t.hasShortNotes ?? true,
+      hasDoubts: t.hasDoubts ?? true,
+    }));
   }
 
   getTopicNotes(topicName: string): TopicNote {
     return {
       title: `${topicName} - Detailed Notes`,
-      content: `Detailed study notes and conceptual breakdown for ${topicName}. Covering core definitions, physiological mechanisms, governing laws, and illustrative standard problems to ensure comprehensive mastery for competitive examinations.`,
-      downloadUrl: "#download-pdf",
+      content: `Comprehensive study notes and conceptual breakdown for ${topicName}. Covering core definitions, governing principles, and standard illustrative problems.`,
       keyPoints: [
         "Core conceptual foundations and definitions",
-        "Step-by-step mechanism and theoretical principles",
-        "Key standard formulas and standard values to remember",
-        "Important exam trends and frequently asked question patterns"
+        "Step-by-step mechanisms and theoretical principles",
+        "Key standard formulas and values to remember"
       ]
     };
   }
@@ -221,35 +224,20 @@ class ExamService {
       title: `${topicName} - Quick Revision Notes`,
       summary: `Concise revision summary designed for quick last-minute review of key concepts in ${topicName}.`,
       keyPoints: [
-        `Primary definition & key equations for ${topicName}`,
-        "Crucial exceptions and high-yield exam takeaways",
+        `Primary definitions for ${topicName}`,
+        "Crucial exceptions and high-yield takeaways",
         "Formula shortcut sheet & rapid calculation tips"
       ],
       formulaeOrKeywords: [
-        "Key Term 1: Fundamental Law",
-        "Key Term 2: Standard Equilibrium Equation",
-        "Key Term 3: Primary Regulation Mechanism"
+        "Core Law & Postulates",
+        "Standard Equilibrium Equation",
+        "Primary Regulation Mechanism"
       ]
     };
   }
 
-  getTopicDoubts(topicName: string): TopicDoubt[] {
-    return [
-      {
-        id: "d-1",
-        question: `What are the most common exam questions asked from ${topicName}?`,
-        answer: `In competitive exams, questions on ${topicName} frequently test primary principles, numerical applications, and conceptual exceptions. Make sure to review previous year questions focusing on standard mechanisms.`,
-        createdAt: "2 days ago",
-        status: "answered"
-      },
-      {
-        id: "d-2",
-        question: `How should I approach memory-based facts in ${topicName}?`,
-        answer: `Use active recall and quick revision tables provided in the Short Notes section to lock in key terms effectively.`,
-        createdAt: "1 week ago",
-        status: "answered"
-      }
-    ];
+  getTopicDoubts(_topicName: string): TopicDoubt[] {
+    return [];
   }
 }
 

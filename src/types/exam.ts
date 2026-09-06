@@ -13,7 +13,10 @@ export interface ExamInfo {
 export interface ChapterTopic {
   id: string;
   name: string;
-  category?: string; // e.g. "Botany", "Zoology", "Class 11", "Class 12"
+  category?: string;
+  hasNotes?: boolean;
+  hasShortNotes?: boolean;
+  hasDoubts?: boolean;
 }
 
 export interface TopicNote {
