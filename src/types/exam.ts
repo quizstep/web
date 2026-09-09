@@ -19,6 +19,21 @@ export interface ChapterTopic {
   hasDoubts?: boolean;
 }
 
+export interface PdfMaterial {
+  id: string;
+  title: string;
+  examSlug: string;
+  subject: string;
+  category?: string;
+  chapterId: string;
+  chapterName: string;
+  type: 'notes' | 'question_bank';
+  fileUrl: string;
+  fileName: string;
+  fileSize?: string;
+  uploadedAt: string;
+}
+
 export interface TopicNote {
   title: string;
   content: string;

@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import Link from "next/link";
-import type { ChapterTopic, StudyMaterial } from "@/types/exam";
+import type { ChapterTopic, StudyMaterial, PdfMaterial } from "@/types/exam";
+import { examService } from "@/lib/services/examService";
 import { MaterialItem } from "@/components/exams/MaterialItem";
 import { AddMaterialButton } from "@/components/admin/AddMaterialButton";
 
@@ -18,6 +19,31 @@ export function TopicDashboard({ examSlug, subject, topic, activeTab, materials 
   const [doubtInput, setDoubtInput] = useState("");
   const [userDoubts, setUserDoubts] = useState<Array<{ id: string; question: string; time: string }>>([]);
   const [submitted, setSubmitted] = useState(false);
+  const [viewingPdfUrl, setViewingPdfUrl] = useState<string | null>(null);
+
+  // Retrieve published PDF materials from examService
+  const pdfNotes = useMemo(() => {
+    return examService.getPdfMaterials(examSlug, subject, topic.id, "notes");
+  }, [examSlug, subject, topic.id]);
+
+  const pdfQuestionBanks = useMemo(() => {
+    return examService.getPdfMaterials(examSlug, subject, topic.id, "question_bank");
+  }, [examSlug, subject, topic.id]);
+
+  // Fallback check if category matching PDFs exist
+  const allExamPdfs = useMemo(() => {
+    return examService.getPdfMaterials(examSlug, subject);
+  }, [examSlug, subject]);
+
+  const categoryNotes = useMemo(() => {
+    if (pdfNotes.length > 0) return pdfNotes;
+    return allExamPdfs.filter((p) => p.type === "notes" && (p.chapterId === topic.id || p.category === topic.category));
+  }, [pdfNotes, allExamPdfs, topic]);
+
+  const categoryQuestionBanks = useMemo(() => {
+    if (pdfQuestionBanks.length > 0) return pdfQuestionBanks;
+    return allExamPdfs.filter((p) => p.type === "question_bank" && (p.chapterId === topic.id || p.category === topic.category));
+  }, [pdfQuestionBanks, allExamPdfs, topic]);
 
   const handleSubmitDoubt = (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,6 +107,35 @@ export function TopicDashboard({ examSlug, subject, topic, activeTab, materials 
         </div>
       </div>
 
+      {/* PDF Viewer Modal if active */}
+      {viewingPdfUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-[var(--surface-color)] border border-[var(--border-color)] rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+            <div className="px-4 py-3 border-b border-[var(--border-color)] flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">📄</span>
+                <span className="text-xs sm:text-sm font-bold text-[var(--text-primary)]">
+                  PDF Material Viewer (Read-Only)
+                </span>
+              </div>
+              <button
+                onClick={() => setViewingPdfUrl(null)}
+                className="px-3 py-1 text-xs font-bold text-gray-500 hover:text-[var(--text-primary)] rounded-lg hover:bg-[var(--tag-bg)] transition-colors"
+              >
+                Close ✕
+              </button>
+            </div>
+            <div className="flex-1 bg-gray-100 dark:bg-gray-900 p-2 overflow-auto">
+              <iframe
+                src={viewingPdfUrl}
+                className="w-full h-[70vh] rounded-xl border border-[var(--border-color)]"
+                title="PDF Viewer"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 1. Notes View */}
       {currentTab === "notes" && (
         <section className="bg-[var(--surface-color)] border border-[var(--border-color)] rounded-2xl p-6 shadow-sm space-y-4">
@@ -93,10 +148,43 @@ export function TopicDashboard({ examSlug, subject, topic, activeTab, materials 
             </span>
           </div>
 
-          <div className="py-8 text-center text-xs sm:text-sm text-[var(--text-secondary)] space-y-1">
-            <p className="font-semibold text-[var(--text-primary)]">Notes modules for {topic.name}</p>
-            <p>Module materials will be displayed here as they are published.</p>
-          </div>
+          {categoryNotes.length > 0 ? (
+            <div className="grid grid-cols-1 gap-3">
+              {categoryNotes.map((pdf) => (
+                <div
+                  key={pdf.id}
+                  className="p-4 bg-[var(--surface-color)] border border-[var(--border-color)] rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-blue-500/50 transition-all shadow-xs"
+                >
+                  <div className="flex items-start gap-3.5">
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 text-[var(--primary-blue)] flex items-center justify-center font-bold text-xl shrink-0 mt-0.5">
+                      📖
+                    </div>
+                    <div className="space-y-1">
+                      <h4 className="text-xs sm:text-sm font-bold text-[var(--text-primary)]">
+                        {pdf.title}
+                      </h4>
+                      <p className="text-[11px] text-[var(--text-secondary)]">
+                        {pdf.fileName} • {pdf.fileSize || "PDF Material"} • Uploaded {pdf.uploadedAt}
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setViewingPdfUrl(pdf.fileUrl)}
+                    className="px-4 py-2 text-xs font-bold text-white bg-[var(--primary-blue)] rounded-xl hover:opacity-90 transition-all self-start sm:self-center shrink-0"
+                  >
+                    View PDF
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="py-8 text-center text-xs sm:text-sm text-[var(--text-secondary)] space-y-1">
+              <p className="font-semibold text-[var(--text-primary)]">Notes modules for {topic.name}</p>
+              <p>Module materials will be displayed here as they are published by the admin.</p>
+            </div>
+          )}
         </section>
       )}
 
@@ -195,17 +283,51 @@ export function TopicDashboard({ examSlug, subject, topic, activeTab, materials 
             <AddMaterialButton />
           </div>
 
+          {/* Render PDF Question Banks if present */}
+          {categoryQuestionBanks.length > 0 && (
+            <div className="grid grid-cols-1 gap-3">
+              {categoryQuestionBanks.map((pdf) => (
+                <div
+                  key={pdf.id}
+                  className="p-4 bg-[var(--surface-color)] border border-[var(--border-color)] rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-blue-500/50 transition-all shadow-xs"
+                >
+                  <div className="flex items-start gap-3.5">
+                    <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-xl shrink-0 mt-0.5">
+                      📑
+                    </div>
+                    <div className="space-y-1">
+                      <h4 className="text-xs sm:text-sm font-bold text-[var(--text-primary)]">
+                        {pdf.title}
+                      </h4>
+                      <p className="text-[11px] text-[var(--text-secondary)]">
+                        {pdf.fileName} • {pdf.fileSize || "Question Bank PDF"} • Uploaded {pdf.uploadedAt}
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setViewingPdfUrl(pdf.fileUrl)}
+                    className="px-4 py-2 text-xs font-bold text-white bg-[var(--primary-blue)] rounded-xl hover:opacity-90 transition-all self-start sm:self-center shrink-0"
+                  >
+                    View PDF
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
           {materials.length > 0 ? (
             <div className="space-y-3">
               {materials.map((mat) => (
                 <MaterialItem key={mat.id} material={mat} />
               ))}
             </div>
-          ) : (
+          ) : categoryQuestionBanks.length === 0 ? (
             <div className="py-12 text-center text-xs text-[var(--text-secondary)]">
               No question banks available yet.
             </div>
-          )}
+          ) : null}
         </section>
       )}
     </div>

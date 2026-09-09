@@ -1,4 +1,4 @@
-import type { ExamInfo, StudyMaterial, ChapterTopic, TopicNote, TopicShortNote, TopicDoubt } from "@/types/exam";
+import type { ExamInfo, StudyMaterial, ChapterTopic, TopicNote, TopicShortNote, TopicDoubt, PdfMaterial } from "@/types/exam";
 
 /**
  * Service for fetching exam configurations, chapter topics, and study content
@@ -181,6 +181,8 @@ class ExamService {
     ],
   };
 
+  private pdfMaterials: PdfMaterial[] = [];
+
   getAllExams(): ExamInfo[] {
     return Object.values(this.exams);
   }
@@ -205,6 +207,32 @@ class ExamService {
       hasShortNotes: t.hasShortNotes ?? true,
       hasDoubts: t.hasDoubts ?? true,
     }));
+  }
+
+  getPdfMaterials(examSlug?: string, subject?: string, chapterId?: string, type?: 'notes' | 'question_bank'): PdfMaterial[] {
+    return this.pdfMaterials.filter((item) => {
+      if (examSlug && item.examSlug.toLowerCase() !== examSlug.toLowerCase()) return false;
+      if (subject && item.subject.toLowerCase() !== subject.toLowerCase()) return false;
+      if (chapterId && item.chapterId !== chapterId) return false;
+      if (type && item.type !== type) return false;
+      return true;
+    });
+  }
+
+  addPdfMaterial(material: Omit<PdfMaterial, 'id' | 'uploadedAt'>): PdfMaterial {
+    const newItem: PdfMaterial = {
+      ...material,
+      id: `pdf-${Date.now()}`,
+      uploadedAt: new Date().toISOString().split('T')[0],
+    };
+    this.pdfMaterials = [newItem, ...this.pdfMaterials];
+    return newItem;
+  }
+
+  deletePdfMaterial(id: string): boolean {
+    const initialLength = this.pdfMaterials.length;
+    this.pdfMaterials = this.pdfMaterials.filter((item) => item.id !== id);
+    return this.pdfMaterials.length < initialLength;
   }
 
   getTopicNotes(topicName: string): TopicNote {
