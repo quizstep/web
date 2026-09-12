@@ -96,6 +96,30 @@ export function AdminCurriculumManager({
   const [expandedChapterId, setExpandedChapterId] = useState<string | null>(null);
   const [previewPdfUrl, setPreviewPdfUrl] = useState<{ title: string; url: string } | null>(null);
 
+  // Subtle aesthetic theme variations for adjacent cards
+  const cardThemes = [
+    {
+      bg: "bg-gradient-to-br from-blue-50/50 via-[var(--surface-color)] to-slate-50/60 dark:from-blue-950/20 dark:via-[var(--surface-color)] dark:to-slate-900/50",
+      border: "border-blue-200/80 dark:border-blue-900/40",
+      accent: "border-l-4 border-l-blue-500",
+    },
+    {
+      bg: "bg-gradient-to-br from-indigo-50/50 via-[var(--surface-color)] to-slate-50/60 dark:from-indigo-950/20 dark:via-[var(--surface-color)] dark:to-slate-900/50",
+      border: "border-indigo-200/80 dark:border-indigo-900/40",
+      accent: "border-l-4 border-l-indigo-500",
+    },
+    {
+      bg: "bg-gradient-to-br from-purple-50/50 via-[var(--surface-color)] to-slate-50/60 dark:from-purple-950/20 dark:via-[var(--surface-color)] dark:to-slate-900/50",
+      border: "border-purple-200/80 dark:border-purple-900/40",
+      accent: "border-l-4 border-l-purple-500",
+    },
+    {
+      bg: "bg-gradient-to-br from-cyan-50/50 via-[var(--surface-color)] to-slate-50/60 dark:from-cyan-950/20 dark:via-[var(--surface-color)] dark:to-slate-900/50",
+      border: "border-cyan-200/80 dark:border-cyan-900/40",
+      accent: "border-l-4 border-l-cyan-500",
+    },
+  ];
+
   const handleOpenAddChapter = () => {
     setSelectedChapterExamSlugs(examsContainingSubject.map((e) => e.slug));
     setBiologyBranch("Botany");
@@ -287,7 +311,7 @@ export function AdminCurriculumManager({
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {chapList.map((ch) => {
+                {chapList.map((ch, idx) => {
                   const chapterPdfs = allPdfMaterials.filter(
                     (m) =>
                       m.subject.toLowerCase() === selectedSubject.toLowerCase() &&
@@ -298,19 +322,21 @@ export function AdminCurriculumManager({
                   const totalPdfs = chapterPdfs.length;
                   const targetExams = ch.examSlugs || (ch.examSlug ? [ch.examSlug] : examsContainingSubject.map((e) => e.slug));
                   const isExpanded = expandedChapterId === ch.id;
+                  const theme = cardThemes[idx % cardThemes.length];
 
                   return (
                     <div
                       key={ch.id}
+                      onClick={() => setExpandedChapterId(isExpanded ? null : ch.id)}
                       onMouseLeave={() => {
                         if (isExpanded) {
                           setExpandedChapterId(null);
                         }
                       }}
-                      className={`p-4 bg-[var(--surface-color)] border rounded-2xl transition-all duration-200 shadow-xs flex flex-col justify-between ${
+                      className={`p-4 rounded-2xl cursor-pointer transition-all duration-200 shadow-xs flex flex-col justify-between ${theme.accent} ${
                         isExpanded
-                          ? "border-[var(--primary-blue)] ring-2 ring-[var(--primary-blue)]/20 shadow-md bg-blue-50/10 dark:bg-blue-950/10"
-                          : "border-[var(--border-color)] hover:border-gray-400 dark:hover:border-gray-600"
+                          ? "border-[var(--primary-blue)] ring-2 ring-[var(--primary-blue)]/20 shadow-md bg-blue-50/30 dark:bg-blue-950/30"
+                          : `${theme.bg} ${theme.border} hover:border-gray-400 dark:hover:border-gray-500 hover:-translate-y-0.5 hover:shadow-md`
                       }`}
                     >
                       {/* Collapsed Chapter Top Header */}
@@ -345,24 +371,23 @@ export function AdminCurriculumManager({
 
                       {/* Collapsed Card Bottom Controls */}
                       <div className="flex items-center justify-between gap-2 pt-3 border-t border-[var(--border-color)]/60 mt-3">
-                        <button
-                          type="button"
-                          onClick={() => setExpandedChapterId(isExpanded ? null : ch.id)}
-                          className={`px-3.5 py-1.5 text-xs font-extrabold rounded-xl transition-all flex items-center gap-1.5 ${
-                            isExpanded
-                              ? "bg-[var(--primary-blue)] text-white shadow-sm"
-                              : "bg-blue-50 text-[var(--primary-blue)] dark:bg-blue-950/50 dark:text-blue-300 hover:bg-blue-100 border border-blue-200/80 dark:border-blue-900"
-                          }`}
-                        >
+                        <span className={`px-3 py-1.5 text-xs font-extrabold rounded-xl transition-all flex items-center gap-1.5 ${
+                          isExpanded
+                            ? "bg-[var(--primary-blue)] text-white shadow-sm"
+                            : "bg-blue-50 text-[var(--primary-blue)] dark:bg-blue-950/50 dark:text-blue-300 border border-blue-200/80 dark:border-blue-900"
+                        }`}>
                           <span>View Content ({totalPdfs})</span>
                           <span className={`text-[10px] transition-transform ${isExpanded ? "rotate-180" : ""}`}>
                             ▼
                           </span>
-                        </button>
+                        </span>
 
                         <button
                           type="button"
-                          onClick={() => setDeletingTopic({ id: ch.id, name: ch.name })}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeletingTopic({ id: ch.id, name: ch.name });
+                          }}
                           className="px-2.5 py-1 text-xs font-bold text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-colors"
                         >
                           Delete
@@ -377,23 +402,24 @@ export function AdminCurriculumManager({
                               Attached Study Content ({totalPdfs})
                             </span>
                             <span className="text-[10px] text-[var(--text-secondary)] italic">
-                              (Move mouse outside card to close)
+                              (Move cursor outside card to close)
                             </span>
                           </div>
 
                           {totalPdfs === 0 ? (
-                            <div className="p-3 bg-[var(--tag-bg)]/50 border border-dashed border-[var(--border-color)] rounded-xl text-center space-y-2">
+                            <div className="p-3 bg-[var(--tag-bg)]/60 border border-dashed border-[var(--border-color)] rounded-xl text-center space-y-2">
                               <p className="text-xs text-[var(--text-secondary)]">No materials uploaded for this chapter yet.</p>
                               <button
                                 type="button"
-                                onClick={() =>
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                   onNavigateToUpload?.({
                                     examSlug: selectedExamSlug,
                                     subject: selectedSubject,
                                     category: ch.category,
                                     chapterId: ch.id,
-                                  })
-                                }
+                                  });
+                                }}
                                 className="px-3.5 py-1.5 text-xs font-bold text-white bg-[var(--primary-blue)] rounded-xl hover:opacity-90 transition-all inline-flex items-center gap-1"
                               >
                                 + Add PDF to Chapter
@@ -425,14 +451,18 @@ export function AdminCurriculumManager({
                                   <div className="flex items-center gap-1.5 shrink-0">
                                     <button
                                       type="button"
-                                      onClick={() => setPreviewPdfUrl({ title: pdf.title, url: pdf.fileUrl })}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setPreviewPdfUrl({ title: pdf.title, url: pdf.fileUrl });
+                                      }}
                                       className="px-2 py-0.5 text-[11px] font-bold text-[var(--primary-blue)] border border-[var(--primary-blue)]/30 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-colors"
                                     >
                                       Preview
                                     </button>
                                     <button
                                       type="button"
-                                      onClick={() => {
+                                      onClick={(e) => {
+                                        e.stopPropagation();
                                         examService.deletePdfMaterial(pdf.id);
                                         setVersion((v) => v + 1);
                                         onCurriculumChanged?.();
@@ -448,14 +478,15 @@ export function AdminCurriculumManager({
                               <div className="pt-2 flex justify-end">
                                 <button
                                   type="button"
-                                  onClick={() =>
+                                  onClick={(e) => {
+                                    e.stopPropagation();
                                     onNavigateToUpload?.({
                                       examSlug: selectedExamSlug,
                                       subject: selectedSubject,
                                       category: ch.category,
                                       chapterId: ch.id,
-                                    })
-                                  }
+                                    });
+                                  }}
                                   className="px-3.5 py-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 rounded-xl hover:bg-emerald-100 transition-all inline-flex items-center gap-1"
                                 >
                                   + Add PDF to Chapter
