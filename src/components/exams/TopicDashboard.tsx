@@ -80,7 +80,7 @@ export function TopicDashboard({ examSlug, subject, topic, activeTab, materials 
         </div>
 
         {/* Minimal Navigation Tabs */}
-        <div className="flex items-center gap-1.5 pt-3 border-t border-[var(--border-color)] overflow-x-auto">
+        <div className="flex items-center gap-1.5 pt-3 border-t border-[var(--border-color)] overflow-x-auto no-scrollbar">
           {[
             { id: "notes", label: "Notes", icon: "📖" },
             { id: "short-notes", label: "Short Notes", icon: "⚡" },

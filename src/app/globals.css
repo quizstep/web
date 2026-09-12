@@ -75,3 +75,12 @@ body {
   color: #ffffff !important;
   box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
 }
+
+/* Hide scrollbars on tab bars */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

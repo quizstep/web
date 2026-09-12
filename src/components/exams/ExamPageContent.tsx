@@ -18,8 +18,13 @@ function ExamPageContentInner({ exam }: ExamPageContentProps) {
   const selectedSubject = searchParams.get("subject");
   const tab = searchParams.get("tab") || "notes";
 
-  // If no subject has been selected yet, render the Subject Selection View
-  if (!selectedSubject) {
+  // Validate selectedSubject against exam.subjects
+  const validSubject = exam.subjects.find(
+    (s) => s.toLowerCase() === (selectedSubject || "").toLowerCase()
+  );
+
+  // If no subject has been selected yet or invalid subject for this exam, render Subject Selection View
+  if (!selectedSubject || !validSubject) {
     return (
       <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-10 sm:py-16 space-y-8">
         <div className="text-center space-y-2">
@@ -58,9 +63,9 @@ function ExamPageContentInner({ exam }: ExamPageContentProps) {
     );
   }
 
-  // Once a subject is selected, load its topics and render the locked dashboard
-  const currentSubject = selectedSubject;
-  const topics = examService.getTopicsBySubject(currentSubject);
+  // Once a valid subject is selected, load its exam-scoped topics
+  const currentSubject = validSubject;
+  const topics = examService.getTopicsBySubject(currentSubject, exam.slug);
 
   const activeTopicId = searchParams.get("topic") || (topics[0]?.id ?? "");
   const activeTopic = topics.find((t) => t.id === activeTopicId) || topics[0];

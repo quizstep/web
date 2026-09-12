@@ -1,39 +1,112 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { examService } from "@/lib/services/examService";
 import type { PdfMaterial } from "@/types/exam";
 
 interface AdminUploadFormProps {
-  onMaterialUploaded: (material: PdfMaterial) => void;
+  onMaterialUploaded: (materials: PdfMaterial[]) => void;
+  initialSelection?: {
+    examSlug?: string;
+    subject?: string;
+    category?: string;
+    chapterId?: string;
+  } | null;
 }
 
-export function AdminUploadForm({ onMaterialUploaded }: AdminUploadFormProps) {
+export function AdminUploadForm({ onMaterialUploaded, initialSelection }: AdminUploadFormProps) {
   const exams = examService.getAllExams();
 
-  const [selectedExamSlug, setSelectedExamSlug] = useState<string>(exams[0]?.slug || "neet");
-  const selectedExam = useMemo(() => {
-    return examService.getExamBySlug(selectedExamSlug) || exams[0];
-  }, [selectedExamSlug, exams]);
+  // Multi-exam selection state
+  const [selectedExamSlugs, setSelectedExamSlugs] = useState<string[]>([exams[0]?.slug || "jee"]);
 
-  const [selectedSubject, setSelectedSubject] = useState(selectedExam.subjects[0] || "Biology");
+  // Derive primary exam for primary subject dropdown context
+  const primaryExamSlug = selectedExamSlugs[0] || exams[0]?.slug || "jee";
+  const primaryExam = useMemo(() => {
+    return examService.getExamBySlug(primaryExamSlug) || exams[0];
+  }, [primaryExamSlug, exams]);
 
-  // Filter topics for the selected subject
+  // Subject state
+  const [selectedSubject, setSelectedSubject] = useState<string>("");
+
+  // Sync selected subject when primary exam changes if current subject not available
+  useEffect(() => {
+    if (primaryExam && primaryExam.subjects.length > 0) {
+      const isSubjectValid = primaryExam.subjects.some(
+        (s) => s.toLowerCase() === selectedSubject.toLowerCase()
+      );
+      if (!isSubjectValid) {
+        setSelectedSubject(primaryExam.subjects[0]);
+      }
+    }
+  }, [primaryExam, selectedSubject]);
+
+  const [topicsVersion, setTopicsVersion] = useState(0);
+
+  // Filter topics for the selected subject and exam
   const availableTopics = useMemo(() => {
-    return examService.getTopicsBySubject(selectedSubject);
-  }, [selectedSubject]);
+    if (!selectedSubject) return [];
+    return examService.getTopicsBySubject(selectedSubject, primaryExamSlug);
+  }, [selectedSubject, primaryExamSlug, topicsVersion]);
 
+  // Derive unique categories
   const categories = useMemo(() => {
+    if (availableTopics.length === 0) return [];
     return Array.from(new Set(availableTopics.map((t) => t.category || "General Topics")));
   }, [availableTopics]);
 
-  const [selectedCategory, setSelectedCategory] = useState(categories[0] || "");
+  // Category state
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
+
+  // Auto-sync selected category whenever categories change
+  useEffect(() => {
+    if (categories.length > 0) {
+      if (!categories.includes(selectedCategory)) {
+        setSelectedCategory(categories[0]);
+      }
+    } else {
+      setSelectedCategory("");
+    }
+  }, [categories, selectedCategory]);
+
+  // Filtered topics by category
   const filteredCategoryTopics = useMemo(() => {
     if (!selectedCategory) return availableTopics;
     return availableTopics.filter((t) => (t.category || "General Topics") === selectedCategory);
   }, [availableTopics, selectedCategory]);
 
-  const [selectedChapterId, setSelectedChapterId] = useState(filteredCategoryTopics[0]?.id || "");
+  // Chapter module state
+  const [selectedChapterId, setSelectedChapterId] = useState<string>("");
+
+  // Auto-sync selected chapter whenever filteredCategoryTopics change
+  useEffect(() => {
+    if (filteredCategoryTopics.length > 0) {
+      if (!filteredCategoryTopics.some((t) => t.id === selectedChapterId)) {
+        setSelectedChapterId(filteredCategoryTopics[0].id);
+      }
+    } else {
+      setSelectedChapterId("");
+    }
+  }, [filteredCategoryTopics, selectedChapterId]);
+
+  // Auto-sync initialSelection when passed from Manage tab (+ Add PDF button)
+  useEffect(() => {
+    if (initialSelection) {
+      if (initialSelection.examSlug) {
+        setSelectedExamSlugs([initialSelection.examSlug]);
+      }
+      if (initialSelection.subject) {
+        setSelectedSubject(initialSelection.subject);
+      }
+      if (initialSelection.category) {
+        setSelectedCategory(initialSelection.category);
+      }
+      if (initialSelection.chapterId) {
+        setSelectedChapterId(initialSelection.chapterId);
+      }
+    }
+  }, [initialSelection]);
+
   const selectedChapter = useMemo(() => {
     return availableTopics.find((t) => t.id === selectedChapterId) || filteredCategoryTopics[0] || availableTopics[0];
   }, [availableTopics, filteredCategoryTopics, selectedChapterId]);
@@ -45,12 +118,39 @@ export function AdminUploadForm({ onMaterialUploaded }: AdminUploadFormProps) {
   const [success, setSuccess] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  // Update subject when exam changes
-  const handleExamChange = (slug: string) => {
-    setSelectedExamSlug(slug);
-    const exam = examService.getExamBySlug(slug);
-    if (exam && exam.subjects.length > 0) {
-      setSelectedSubject(exam.subjects[0]);
+
+
+  // Multi-exam selection toggle
+  const toggleExamSlug = (slug: string) => {
+    setSelectedExamSlugs((prev) => {
+      let nextSlugs: string[];
+      if (prev.includes(slug)) {
+        nextSlugs = prev.filter((s) => s !== slug);
+      } else {
+        nextSlugs = [slug, ...prev];
+      }
+
+      if (nextSlugs.length > 0) {
+        const newPrimary = examService.getExamBySlug(nextSlugs[0]) || exams[0];
+        if (newPrimary && newPrimary.subjects.length > 0) {
+          const isSubjectValid = newPrimary.subjects.some(
+            (s) => s.toLowerCase() === selectedSubject.toLowerCase()
+          );
+          if (!isSubjectValid) {
+            setSelectedSubject(newPrimary.subjects[0]);
+          }
+        }
+      }
+
+      return nextSlugs;
+    });
+  };
+
+  const toggleSelectAllExams = () => {
+    if (selectedExamSlugs.length === exams.length) {
+      setSelectedExamSlugs([]);
+    } else {
+      setSelectedExamSlugs(exams.map((e) => e.slug));
     }
   };
 
@@ -67,7 +167,6 @@ export function AdminUploadForm({ onMaterialUploaded }: AdminUploadFormProps) {
 
     setFile(selected);
     if (!title) {
-      // Auto-fill title from filename
       setTitle(selected.name.replace(/\.pdf$/i, "").replace(/_/g, " "));
     }
   };
@@ -76,6 +175,11 @@ export function AdminUploadForm({ onMaterialUploaded }: AdminUploadFormProps) {
     e.preventDefault();
     setError("");
     setSuccess("");
+
+    if (selectedExamSlugs.length === 0) {
+      setError("Please select at least one target exam.");
+      return;
+    }
 
     if (!file) {
       setError("Please select a valid PDF file.");
@@ -92,24 +196,27 @@ export function AdminUploadForm({ onMaterialUploaded }: AdminUploadFormProps) {
     setTimeout(() => {
       setSubmitting(false);
 
-      const published = examService.addPdfMaterial({
-        title: title.trim(),
-        examSlug: selectedExamSlug,
-        subject: selectedSubject,
-        category: selectedCategory || selectedChapter?.category,
-        chapterId: selectedChapter?.id || "ch-1",
-        chapterName: selectedChapter?.name || "Chapter Module",
-        type: pdfType,
-        fileUrl: URL.createObjectURL(file),
-        fileName: file.name,
-        fileSize: `${(file.size / (1024 * 1024)).toFixed(2)} MB`,
-      });
+      const publishedList = examService.addPdfMaterialMulti(
+        {
+          title: title.trim(),
+          examSlug: selectedExamSlugs[0],
+          subject: selectedSubject,
+          category: selectedCategory || selectedChapter?.category,
+          chapterId: selectedChapter?.id || "ch-custom",
+          chapterName: selectedChapter?.name || "Chapter Module",
+          type: pdfType,
+          fileUrl: URL.createObjectURL(file),
+          fileName: file.name,
+          fileSize: `${(file.size / (1024 * 1024)).toFixed(2)} MB`,
+        },
+        selectedExamSlugs
+      );
 
-      onMaterialUploaded(published);
-      setSuccess(`Successfully published "${published.title}" as PDF!`);
+      onMaterialUploaded(publishedList);
+      setSuccess(`Published "${title.trim()}" to ${selectedExamSlugs.length} exam(s)!`);
       setTitle("");
       setFile(null);
-    }, 500);
+    }, 400);
   };
 
   return (
@@ -119,7 +226,7 @@ export function AdminUploadForm({ onMaterialUploaded }: AdminUploadFormProps) {
           Upload PDF Material
         </h3>
         <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-          Cascading Selection: Exam → Subject → Category → Chapter Module (PDF Files Only).
+          Select target exams, subject, class category, and chapter module. PDF files only.
         </p>
       </div>
 
@@ -138,45 +245,77 @@ export function AdminUploadForm({ onMaterialUploaded }: AdminUploadFormProps) {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Step 1 & 2: Select Exam & Subject */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="space-y-1.5">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Multi-Exam Selector */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
             <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">
-              1. Select Exam
+              1. Target Exams (Multi-Select)
             </label>
-            <select
-              value={selectedExamSlug}
-              onChange={(e) => handleExamChange(e.target.value)}
-              className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-[var(--surface-color)] border border-[var(--border-color)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-blue)] transition-all"
+            <button
+              type="button"
+              onClick={toggleSelectAllExams}
+              className="text-[11px] font-bold text-[var(--primary-blue)] hover:underline"
             >
-              {exams.map((ex) => (
-                <option key={ex.slug} value={ex.slug}>
-                  {ex.name} ({ex.fullName})
-                </option>
-              ))}
-            </select>
+              {selectedExamSlugs.length === exams.length ? "Deselect All" : "Select All Exams"}
+            </button>
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">
-              2. Select Subject
-            </label>
-            <select
-              value={selectedSubject}
-              onChange={(e) => setSelectedSubject(e.target.value)}
-              className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-[var(--surface-color)] border border-[var(--border-color)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-blue)] transition-all"
-            >
-              {selectedExam.subjects.map((sub) => (
-                <option key={sub} value={sub}>
-                  {sub}
-                </option>
-              ))}
-            </select>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            {exams.map((ex) => {
+              const isChecked = selectedExamSlugs.includes(ex.slug);
+              return (
+                <button
+                  key={ex.slug}
+                  type="button"
+                  onClick={() => toggleExamSlug(ex.slug)}
+                  className={`p-3 text-left rounded-xl border transition-all flex items-center justify-between ${
+                    isChecked
+                      ? "bg-blue-50 border-[var(--primary-blue)] text-[var(--primary-blue)] dark:bg-blue-950/40"
+                      : "bg-[var(--surface-color)] border-[var(--border-color)] text-[var(--text-secondary)] hover:border-gray-400"
+                  }`}
+                >
+                  <div className="font-extrabold text-xs sm:text-sm">{ex.name}</div>
+                  <div
+                    className={`w-4 h-4 rounded-md flex items-center justify-center text-[10px] font-bold ${
+                      isChecked
+                        ? "bg-[var(--primary-blue)] text-white"
+                        : "border border-[var(--border-color)]"
+                    }`}
+                  >
+                    {isChecked ? "✓" : ""}
+                  </div>
+                </button>
+              );
+            })}
           </div>
+
+          {selectedExamSlugs.length === 0 && (
+            <p className="text-[11px] font-semibold text-amber-600 dark:text-amber-400 pt-1">
+              ⚠️ No target exam selected. Select at least one exam to publish material.
+            </p>
+          )}
         </div>
 
-        {/* Step 3 & 4: Select Class Category & Chapter Module */}
+        {/* Step 2: Select Subject */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">
+            2. Select Subject
+          </label>
+          <select
+            value={selectedSubject}
+            onChange={(e) => setSelectedSubject(e.target.value)}
+            className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-[var(--surface-color)] border border-[var(--border-color)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-blue)] transition-all"
+          >
+            {primaryExam.subjects.map((sub) => (
+              <option key={sub} value={sub}>
+                {sub}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Step 3 & 4: Category & Chapter Module */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">
@@ -199,6 +338,7 @@ export function AdminUploadForm({ onMaterialUploaded }: AdminUploadFormProps) {
             <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">
               4. Chapter / Module
             </label>
+
             <select
               value={selectedChapterId}
               onChange={(e) => setSelectedChapterId(e.target.value)}
@@ -294,9 +434,12 @@ export function AdminUploadForm({ onMaterialUploaded }: AdminUploadFormProps) {
           disabled={submitting || !file}
           className="w-full py-3 text-xs sm:text-sm font-extrabold text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl shadow-md hover:shadow-lg disabled:opacity-40 transition-all active:scale-95"
         >
-          {submitting ? "Publishing PDF..." : "Publish PDF to Chapter"}
+          {submitting
+            ? "Publishing PDF..."
+            : `Publish PDF to ${selectedExamSlugs.length} Exam(s)`}
         </button>
       </form>
     </div>
   );
 }
+

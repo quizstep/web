@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { AdminLoginForm } from "@/components/admin/AdminLoginForm";
 import { AdminUploadForm } from "@/components/admin/AdminUploadForm";
+import { AdminCurriculumManager } from "@/components/admin/AdminCurriculumManager";
 import { AdminPdfList } from "@/components/admin/AdminPdfList";
 import { examService } from "@/lib/services/examService";
 import type { PdfMaterial } from "@/types/exam";
@@ -12,12 +13,11 @@ export default function AdminPage() {
   const [mounted, setMounted] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [adminEmail, setAdminEmail] = useState("");
-  const [activeTab, setActiveTab] = useState<"upload" | "manage">("upload");
+  const [activeTab, setActiveTab] = useState<"upload" | "curriculum" | "manage">("upload");
   const [materials, setMaterials] = useState<PdfMaterial[]>([]);
 
   useEffect(() => {
     setMounted(true);
-    // Load existing PDF materials
     setMaterials(examService.getPdfMaterials());
   }, []);
 
@@ -31,13 +31,32 @@ export default function AdminPage() {
     setAdminEmail("");
   };
 
-  const handleMaterialUploaded = (_material: PdfMaterial) => {
+  const handleMaterialUploaded = (_materials: PdfMaterial[] | PdfMaterial) => {
     setMaterials(examService.getPdfMaterials());
   };
 
   const handleMaterialDeleted = (_id: string) => {
     setMaterials(examService.getPdfMaterials());
   };
+
+  const [uploadPrefill, setUploadPrefill] = useState<{
+    examSlug: string;
+    subject: string;
+    category?: string;
+    chapterId?: string;
+  } | null>(null);
+
+  const handleNavigateToUpload = (prefill: {
+    examSlug: string;
+    subject: string;
+    category?: string;
+    chapterId?: string;
+  }) => {
+    setUploadPrefill(prefill);
+    setActiveTab("upload");
+  };
+
+  if (!mounted) return null;
 
   return (
     <div className="min-h-screen bg-[var(--background-color)] text-[var(--text-primary)] transition-colors duration-200">
@@ -94,12 +113,12 @@ export default function AdminPage() {
                 </p>
               </div>
 
-              {/* Tab Navigation */}
-              <div className="flex items-center gap-2 bg-[var(--tag-bg)] p-1 rounded-xl border border-[var(--border-color)]">
+              {/* 3-Tab Navigation */}
+              <div className="flex items-center gap-1.5 bg-[var(--tag-bg)] p-1 rounded-xl border border-[var(--border-color)] overflow-x-auto no-scrollbar">
                 <button
                   type="button"
                   onClick={() => setActiveTab("upload")}
-                  className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${
+                  className={`px-3.5 py-2 text-xs font-bold rounded-lg transition-all shrink-0 ${
                     activeTab === "upload"
                       ? "bg-[var(--surface-color)] text-[var(--primary-blue)] shadow-sm"
                       : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
@@ -109,8 +128,19 @@ export default function AdminPage() {
                 </button>
                 <button
                   type="button"
+                  onClick={() => setActiveTab("curriculum")}
+                  className={`px-3.5 py-2 text-xs font-bold rounded-lg transition-all shrink-0 ${
+                    activeTab === "curriculum"
+                      ? "bg-[var(--surface-color)] text-[var(--primary-blue)] shadow-sm"
+                      : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                  }`}
+                >
+                  📚 Manage Chapters
+                </button>
+                <button
+                  type="button"
                   onClick={() => setActiveTab("manage")}
-                  className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${
+                  className={`px-3.5 py-2 text-xs font-bold rounded-lg transition-all shrink-0 ${
                     activeTab === "manage"
                       ? "bg-[var(--surface-color)] text-[var(--primary-blue)] shadow-sm"
                       : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
@@ -122,9 +152,19 @@ export default function AdminPage() {
             </div>
 
             {/* Main Content Area */}
-            {activeTab === "upload" ? (
-              <AdminUploadForm onMaterialUploaded={handleMaterialUploaded} />
-            ) : (
+            {activeTab === "upload" && (
+              <AdminUploadForm
+                onMaterialUploaded={handleMaterialUploaded}
+                initialSelection={uploadPrefill}
+              />
+            )}
+            {activeTab === "curriculum" && (
+              <AdminCurriculumManager
+                onNavigateToUpload={handleNavigateToUpload}
+                onCurriculumChanged={() => setMaterials(examService.getPdfMaterials())}
+              />
+            )}
+            {activeTab === "manage" && (
               <AdminPdfList materials={materials} onMaterialDeleted={handleMaterialDeleted} />
             )}
           </div>

@@ -196,22 +196,93 @@ class ExamService {
     return this.mockMaterials[slug] || [];
   }
 
-  getTopicsBySubject(subjectName: string): ChapterTopic[] {
+  getTopicsBySubject(subjectName: string, examSlug?: string): ChapterTopic[] {
     const normalized = Object.keys(this.subjectTopics).find(
       (s) => s.toLowerCase() === subjectName.toLowerCase()
     );
     const list = normalized ? this.subjectTopics[normalized] : [];
-    return list.map((t) => ({
-      ...t,
-      hasNotes: t.hasNotes ?? true,
-      hasShortNotes: t.hasShortNotes ?? true,
-      hasDoubts: t.hasDoubts ?? true,
-    }));
+    return list
+      .filter((t) => {
+        if (!examSlug) return true;
+        const target = examSlug.toLowerCase();
+        if (!t.examSlug && (!t.examSlugs || t.examSlugs.length === 0)) return true;
+        if (t.examSlug && t.examSlug.toLowerCase() === target) return true;
+        if (t.examSlugs && t.examSlugs.some((s) => s.toLowerCase() === target)) return true;
+        return false;
+      })
+      .map((t) => ({
+        ...t,
+        hasNotes: t.hasNotes ?? true,
+        hasShortNotes: t.hasShortNotes ?? true,
+        hasDoubts: t.hasDoubts ?? true,
+      }));
+  }
+
+  addSubjectToExam(examSlug: string, subjectName: string): boolean {
+    const exam = this.getExamBySlug(examSlug);
+    if (!exam) return false;
+    const trimmed = subjectName.trim();
+    if (!trimmed) return false;
+    if (!exam.subjects.some((s) => s.toLowerCase() === trimmed.toLowerCase())) {
+      exam.subjects.push(trimmed);
+    }
+    if (!this.subjectTopics[trimmed]) {
+      this.subjectTopics[trimmed] = [];
+    }
+    return true;
+  }
+
+  addTopicToSubject(
+    subjectName: string,
+    topic: { name: string; category?: string },
+    examSlug?: string | string[]
+  ): ChapterTopic | null {
+    const trimmedName = topic.name.trim();
+    if (!trimmedName) return null;
+    const normalizedKey = Object.keys(this.subjectTopics).find(
+      (s) => s.toLowerCase() === subjectName.toLowerCase()
+    ) || subjectName;
+
+    if (!this.subjectTopics[normalizedKey]) {
+      this.subjectTopics[normalizedKey] = [];
+    }
+
+    const examSlugsArr = Array.isArray(examSlug) ? examSlug : examSlug ? [examSlug] : undefined;
+
+    const newTopic: ChapterTopic = {
+      id: `custom-ch-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      name: trimmedName,
+      category: topic.category?.trim() || `Class XI ${subjectName}`,
+      examSlug: typeof examSlug === "string" ? examSlug : examSlugsArr?.[0],
+      examSlugs: examSlugsArr,
+      hasNotes: true,
+      hasShortNotes: true,
+      hasDoubts: true,
+    };
+
+    this.subjectTopics[normalizedKey].push(newTopic);
+    return newTopic;
+  }
+
+  deleteTopicFromSubject(subjectName: string, topicId: string): boolean {
+    const normalizedKey = Object.keys(this.subjectTopics).find(
+      (s) => s.toLowerCase() === subjectName.toLowerCase()
+    );
+    if (!normalizedKey || !this.subjectTopics[normalizedKey]) return false;
+
+    const initialLen = this.subjectTopics[normalizedKey].length;
+    this.subjectTopics[normalizedKey] = this.subjectTopics[normalizedKey].filter((t) => t.id !== topicId);
+    return this.subjectTopics[normalizedKey].length < initialLen;
   }
 
   getPdfMaterials(examSlug?: string, subject?: string, chapterId?: string, type?: 'notes' | 'question_bank'): PdfMaterial[] {
     return this.pdfMaterials.filter((item) => {
-      if (examSlug && item.examSlug.toLowerCase() !== examSlug.toLowerCase()) return false;
+      if (examSlug) {
+        const lowerSlug = examSlug.toLowerCase();
+        const matchesSingle = item.examSlug.toLowerCase() === lowerSlug;
+        const matchesMulti = item.examSlugs?.some((s) => s.toLowerCase() === lowerSlug);
+        if (!matchesSingle && !matchesMulti) return false;
+      }
       if (subject && item.subject.toLowerCase() !== subject.toLowerCase()) return false;
       if (chapterId && item.chapterId !== chapterId) return false;
       if (type && item.type !== type) return false;
@@ -227,6 +298,26 @@ class ExamService {
     };
     this.pdfMaterials = [newItem, ...this.pdfMaterials];
     return newItem;
+  }
+
+  addPdfMaterialMulti(material: Omit<PdfMaterial, 'id' | 'uploadedAt'>, examSlugs: string[]): PdfMaterial[] {
+    const created: PdfMaterial[] = [];
+    const slugs = examSlugs.length > 0 ? examSlugs : [material.examSlug];
+    const timestamp = Date.now();
+
+    slugs.forEach((slug, idx) => {
+      const newItem: PdfMaterial = {
+        ...material,
+        id: `pdf-${timestamp}-${idx}`,
+        examSlug: slug,
+        examSlugs: slugs,
+        uploadedAt: new Date().toISOString().split('T')[0],
+      };
+      created.push(newItem);
+      this.pdfMaterials = [newItem, ...this.pdfMaterials];
+    });
+
+    return created;
   }
 
   deletePdfMaterial(id: string): boolean {

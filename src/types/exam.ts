@@ -14,6 +14,8 @@ export interface ChapterTopic {
   id: string;
   name: string;
   category?: string;
+  examSlug?: string;
+  examSlugs?: string[];
   hasNotes?: boolean;
   hasShortNotes?: boolean;
   hasDoubts?: boolean;
@@ -23,6 +25,7 @@ export interface PdfMaterial {
   id: string;
   title: string;
   examSlug: string;
+  examSlugs?: string[];
   subject: string;
   category?: string;
   chapterId: string;
