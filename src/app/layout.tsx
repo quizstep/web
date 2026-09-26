@@ -16,8 +16,21 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://web.quizstep.worker
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   applicationName: "QuizStep Academy",
-  title: "QuizStep - Entrance Exam Preparation Platform",
+  title: "QuizStep Academy - Entrance Exam Preparation Platform",
   description: "Access focused, affordable question banks tailored for JEE, NEET, KEAM, and CUET entrance examinations.",
+  openGraph: {
+    title: "QuizStep Academy - Entrance Exam Preparation Platform",
+    description: "Access focused, affordable question banks tailored for JEE, NEET, KEAM, and CUET entrance examinations.",
+    url: siteUrl,
+    siteName: "QuizStep Academy",
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "QuizStep Academy - Entrance Exam Preparation Platform",
+    description: "Access focused, affordable question banks tailored for JEE, NEET, KEAM, and CUET entrance examinations.",
+  },
   icons: {
     icon: [
       { url: "/images/favicon.png", sizes: "32x32", type: "image/png" },
@@ -36,7 +49,7 @@ const websiteJsonLd = {
   "@context": "https://schema.org",
   "@type": "WebSite",
   name: "QuizStep Academy",
-  alternateName: "QuizStep",
+  alternateName: ["QuizStep", "web.quizstep.workers.dev"],
   url: siteUrl,
 };
 
